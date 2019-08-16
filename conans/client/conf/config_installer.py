@@ -50,9 +50,11 @@ def _process_git_repo(config, cache, output):
     with tmp_config_install_folder(cache) as tmp_folder:
         with tools.chdir(tmp_folder):
             try:
+                uri_and_branch = config.uri.split('#')
+                branch = uri_and_branch[1] if len(uri_and_branch) >= 2 else ""
                 args = config.args or ""
                 git = Git(verify_ssl=config.verify_ssl, output=output)
-                git.clone(config.uri, args=args)
+                git.clone(url=uri_and_branch[0], branch=branch, args=args)
                 output.info("Repo cloned!")
             except Exception as e:
                 raise ConanException("Can't clone repo: %s" % str(e))
@@ -168,6 +170,8 @@ class _ConfigOrigin(object):
                 config.type = "file"
             elif uri.startswith("http"):
                 config.type = "url"
+            elif uri.split('#')[0].endswith(".git"):
+                config.type = "git"
             else:
                 raise ConanException("Unable to deduce type config install: %s" % uri)
         config.source_folder = source_folder
